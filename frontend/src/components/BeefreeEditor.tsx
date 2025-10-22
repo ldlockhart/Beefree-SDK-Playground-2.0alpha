@@ -26,7 +26,7 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
         // Fetch the access token from our secure backend
         const tokenResponse = await axios.get('/api/auth');
         const accessToken = tokenResponse.data.access_token;
-        
+
         // Comprehensive Beefree SDK configuration object
         const beeConfig: BeeConfig = {
           uid: 'beefree-sdk-playground-user', // A unique identifier for the user
@@ -101,7 +101,7 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
         // Initialize the BeePlugin
         const bee = new window.BeePlugin(accessToken);
         beeInstanceRef.current = bee;
-        
+
         // Start the editor with the provided template
         bee.start(beeConfig, template);
 
