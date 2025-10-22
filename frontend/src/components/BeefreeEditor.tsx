@@ -1,14 +1,7 @@
-
 import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
-import type { Template, BeeConfig } from '../types';
-
-// Declare BeePlugin on the window object for TypeScript
-declare global {
-    interface Window {
-        BeePlugin: any;
-    }
-}
+import BeefreeSDK from '@beefree.io/sdk';
+import type { Template } from '../types'; // Assuming you have a types file in frontend/src/types/index.ts
 
 interface BeefreeEditorProps {
   template: Template;
@@ -23,36 +16,34 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
       if (!editorContainerRef.current) return;
 
       try {
-        // Fetch the access token from our secure backend
-        const tokenResponse = await axios.get('/api/auth');
-        const accessToken = tokenResponse.data.access_token;
+        // 1. Fetch token from the correct backend endpoint
+        console.log("Requesting auth token from backend...");
+        const tokenResponse = await axios.post(
+          '/proxy/bee-auth', // <-- THE ONLY CHANGE IS HERE
+          { uid: 'beefree-sdk-playground-user' }
+        );
+        const token = tokenResponse.data;
 
-        // Comprehensive Beefree SDK configuration object
-        const beeConfig: BeeConfig = {
-          uid: 'beefree-sdk-playground-user', // A unique identifier for the user
-          container: editorContainerRef.current,
+        // 2. Add the v2 flag to the token object
+        const v2Token = { ...token, v2: true };
+        console.log("Auth token received successfully.");
+
+        // 3. Define the comprehensive Beefree SDK configuration
+        const beeConfig = {
+          uid: 'beefree-sdk-playground-user',
+          container: 'bee-editor-container', // Use the string ID
           language: 'en-US',
           onSave: (jsonFile: string, htmlFile: string) => {
-            console.log('Message Saved!');
-            console.log('JSON:', JSON.parse(jsonFile));
-            console.log('HTML:', htmlFile);
+            console.log('✅ onSave triggered!');
+            console.log(JSON.parse(jsonFile));
           },
           onChange: () => {
             console.log('Content is changing...');
           },
-          // Enable the File Manager with extensive features
           fileManager: {
             enabled: true,
-            // Enable free stock photos from Unsplash
-            stockPhotos: {
-              enabled: true,
-              provider: 'Unsplash',
-            },
-            // Handle file uploads
-            upload: (file, handler) => {
-              // This is a mock upload function for the demo.
-              // In a real application, you would upload the file to your server/CDN
-              // and then call handler.done() with the public URL.
+            stockPhotos: { enabled: true, provider: 'Unsplash' },
+            upload: (file: File, handler: any) => {
               console.log('Simulating upload for file:', file.name);
               setTimeout(() => {
                 const placeholderUrl = `https://picsum.photos/seed/${file.name}/400/300`;
@@ -60,16 +51,10 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
               }, 1500);
             },
           },
-          // Enable Hosted Saved Rows
-          rows: {
-            enabled: true,
-          },
-          // Enable all available application and content permissions
+          rows: { enabled: true },
           permissions: {
-            // Application configuration
             showDefaultAddons: true,
             showRowActions: true,
-            // User permissions
             allowContentEdit: true,
             allowStyleEdit: true,
             allowStructureEdit: true,
@@ -79,52 +64,38 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
             allowChangeView: true,
             allowSave: true,
             allowPreview: true,
-            allowSend: false, // Typically false in an editor context
+            allowSend: false,
             allowViewHistory: true,
             allowChangeHistory: true,
           },
-          // Ensure all standard content blocks are enabled
-          content: {
-            title: { enabled: true },
-            text: { enabled: true },
-            image: { enabled: true },
-            button: { enabled: true },
-            divider: { enabled: true },
-            social: { enabled: true },
-            html: { enabled: true },
-            video: { enabled: true },
-            menu: { enabled: true },
-            icons: { enabled: true },
-          },
         };
 
-        // Initialize the BeePlugin
-        const bee = new window.BeePlugin(accessToken);
+        // 4. Initialize the BeefreeSDK instance with the v2 token
+        console.log("Initializing Beefree SDK instance...");
+        const bee = new BeefreeSDK(v2Token);
         beeInstanceRef.current = bee;
 
-        // Start the editor with the provided template
-        bee.start(beeConfig, template);
+        // 5. Start the editor
+        console.log("Starting editor...");
+        await bee.start(beeConfig, template);
+        console.log("✅ Beefree Editor started successfully!");
 
       } catch (error) {
-        console.error('Failed to initialize Beefree Editor:', error);
+        console.error('🔴 Failed to initialize Beefree Editor:', error);
       }
     };
 
     initializeBee();
 
-    // Cleanup function to destroy the instance when the component unmounts
+    // Cleanup function
     return () => {
       if (beeInstanceRef.current) {
         beeInstanceRef.current.destroy();
-        beeInstanceRef.current = null;
       }
     };
-    // The empty dependency array is correct here because this effect should only run once
-    // when the component mounts. Re-initialization is handled by the `key` prop in App.tsx.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [template]);
 
-  return <div ref={editorContainerRef} className="w-full h-full"></div>;
+  return <div id="bee-editor-container" ref={editorContainerRef} style={{height: '100vh', width: '100%'}}></div>;
 };
 
 export default BeefreeEditor;

@@ -10,7 +10,7 @@ export interface Template {
 // Type for the Beefree SDK configuration object
 export interface BeeConfig {
   uid: string;
-  container: HTMLElement;
+  container: string;
   language: string;
   onSave: (jsonFile: string, htmlFile: string) => void;
   onChange: () => void;
