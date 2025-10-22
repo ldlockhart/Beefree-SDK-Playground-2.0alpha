@@ -1,0 +1,5 @@
+{
+  "name": "Beefree SDK Playground 2.0alpha",
+  "description": "A feature-rich, secure integration of the Beefree SDK using a modern React/Node.js stack. This playground demonstrates key features like the Template Catalog, HTML Importer, and Hosted Saved Rows.",
+  "requestFramePermissions": []
+}
