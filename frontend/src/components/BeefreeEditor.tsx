@@ -98,4 +98,4 @@ const BeefreeEditor: React.FC<BeefreeEditorProps> = ({ template }) => {
   return <div id="bee-editor-container" ref={editorContainerRef} style={{height: '100vh', width: '100%'}}></div>;
 };
 
-export default BeefreeEditor;
+export default BeefreeEditor; 
